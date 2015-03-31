@@ -68,7 +68,7 @@ frontend http
 
     # Define hosts
     {% for domain in domains %}
-    acl host_{{ domain.name|replace(".", "_") }} hdr(host) -i {{ domain.name }}
+    acl host_{{ domain.name|replace(".", "_") }} hdr(host) -i {{ domain.name.lower() }}.{{domain_name}}
     {% endfor %}
 
     # Match domains with backends
@@ -84,6 +84,6 @@ frontend http
 backend {{ domain.name|replace(".", "_") }}_backend
 #     balance roundrobin
 
-    # "{{ domain.ip }}" taken from ${% filter upper %}{{ domain.container_link_alias }}{% endfilter %}_PORT_80_TCP_ADDR environment variable
-    server {{ domain.name|replace(".", "_") }}_container1 {{ domain.ip }}:80 check
+    # "{{ domain.ip }}" taken from ${{ domain.name }}_PORT_80_TCP_ADDR environment variable
+    server {{ domain.name|replace(".", "_") }}_container1 {{ domain.ip }}:{{domain.port}} check
 {% endfor %}

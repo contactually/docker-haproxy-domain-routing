@@ -2,6 +2,7 @@
 
 # This script generates the /etc/haproxy/haproxy.cfg file based on the template () and configuration (/data/haproxy/haproxy-redirect-configuration.yml)
 
+import re
 import os
 import sys
 import errno
@@ -38,8 +39,7 @@ def init(environment="production"):
         configuration["stats"] = { "enabled": false }
 
     # Get IP's from the environment
-    if "domains" in configuration:
-        update_domains_section(configuration["domains"], environment)
+    configuration["domains"] = update_domains_section(environment)
 
     # Render the haproxy configuration
     configuration_file_content = render_configuration(configuration, template_file_path)
@@ -81,21 +81,21 @@ def validate_stats_section(stats_configuration):
     return defaults
 
 # Update the domain entries with their container ip addresse
-def update_domains_section(domains_configuration, environment):
-    for domain in domains_configuration:
-        variable_name = domain["container_link_alias"].upper() + "_PORT_80_TCP_ADDR"
+def update_domains_section(environment):
+    domains = []
+    service = re.compile('(\w+)_PORT_(\d+)_TCP_ADDR')
 
-        if environment == "test":
-            ip = os.getenv(variable_name, "localhost")
-        else:
-            if variable_name in os.environ:
-                ip = os.environ.get(variable_name)
-            else:
-                print(variable_name +" doesn't exist")
-                # Environment variable doesn't exist - exit with error code
-                # sys.exit(errno.EINVAL)
-        
-        domain["ip"] = ip
+    for name, value in os.environ.items():
+        match = service.match(name)
+        if match:
+            print (name)
+            domain = {}
+            domain["name"] = match.group(1)
+            domain["port"] = match.group(2)
+            domain["ip"] = value
+            domains.append(domain)
+
+    return domains
 
 
 if __name__ == "__main__":
