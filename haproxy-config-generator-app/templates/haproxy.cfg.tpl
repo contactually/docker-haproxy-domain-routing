@@ -60,6 +60,7 @@ listen stats 0.0.0.0:{{ stats.port }}       #Listen on all IP's on port 9000
 {% if (domains is defined) or (redirects is defined) %}
 frontend http
     bind 0.0.0.0:80
+    bind 0.0.0.0:443 ssl crt /etc/haproxy/server.pem
 
     {% for redirect in redirects %}
     # Redirect all traffic from {{ redirect.from }} to {{ redirect.to }}
@@ -82,8 +83,10 @@ frontend http
 {% for domain in domains %}
 {# TODO: use replace only once - find an elegant solution #}
 backend {{ domain.name|replace(".", "_") }}_backend
-#     balance roundrobin
-
-    # "{{ domain.ip }}" taken from ${{ domain.name }}_PORT_80_TCP_ADDR environment variable
+    mode http
+    option forwardfor
+    http-request set-header X-Forwarded-Port %[dst_port]
+    http-request add-header X-Forwarded-Proto https if { ssl_fc }
+    # "{{ domain.ip }}" taken from ${{ domain.name }}_PORT_{{domain.port}}_TCP_ADDR environment variable
     server {{ domain.name|replace(".", "_") }}_container1 {{ domain.ip }}:{{domain.port}} check
 {% endfor %}
