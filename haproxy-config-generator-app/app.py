@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 
 AVAILABLE_ENVIRONMENTS = ["test", "development", "staging", "production"]
 
-# 
+#
 def init(environment="production"):
     if environment == "test":
         # For testing purposes
@@ -28,7 +28,7 @@ def init(environment="production"):
         template_file_path = os.path.join(current_file_directory, "templates", "haproxy.cfg.tpl")
         haproxy_configuration_path = os.path.join("/etc", "haproxy", "haproxy.cfg")
 
-    # Read the haproxy-redirect-configuration.yml file which contains all the required data 
+    # Read the haproxy-redirect-configuration.yml file which contains all the required data
     configuration_stream = open(configuration_file_path, "r")
     configuration = yaml.load(configuration_stream)
 
@@ -43,12 +43,12 @@ def init(environment="production"):
 
     # Render the haproxy configuration
     configuration_file_content = render_configuration(configuration, template_file_path)
-    
+
     # Overewrite the file each time
     with open (haproxy_configuration_path, "w") as file:
         file.write (configuration_file_content)
 
-# 
+#
 def render_configuration(configuration, template_file_path):
     # Load templates off the filesystem.
     template_loader = FileSystemLoader( searchpath="/" )
@@ -60,7 +60,7 @@ def render_configuration(configuration, template_file_path):
     # Process the template to produce our final text
     return template.render( configuration )
 
-# 
+#
 def validate_stats_section(stats_configuration):
     # Check required fields: user, password
     for key in ["user", "password"]:
@@ -77,7 +77,7 @@ def validate_stats_section(stats_configuration):
 
     # Set an enabled flag
     defaults["enabled"] = True
-    
+
     return defaults
 
 # Update the domain entries with their container ip addresse
@@ -90,7 +90,7 @@ def update_domains_section(environment):
         if match:
             print (name)
             domain = {}
-            domain["name"] = match.group(1)
+            domain["name"] = os.environ.get(match.group(1) + "_ENV_NAME")
             domain["port"] = match.group(2)
             domain["ip"] = value
             domains.append(domain)
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
         # Exit and return standard exit code
         sys.exit()
-    
+
     # When a wrong environment is passed exit with error code
     # errno.EINVAL - Invalid argument
     sys.exit(errno.EINVAL)
