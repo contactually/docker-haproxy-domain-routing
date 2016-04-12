@@ -70,11 +70,13 @@ frontend http
     # Define hosts
     {% for domain in domains %}
     acl host_{{ domain.name|replace(".", "_") }} hdr(host) -i {{ domain.name.lower() }}.{{domain_name}}
+    acl host_api-{{ domain.name|replace(".", "_") }} hdr(host) -i api-{{ domain.name.lower() }}.{{domain_name}}
     {% endfor %}
 
     # Match domains with backends
     {% for domain in domains %}
     use_backend {{ domain.name|replace(".", "_") }}_backend if host_{{ domain.name|replace(".", "_") }}
+    use_backend {{ domain.name|replace(".", "_") }}_backend if host_api-{{ domain.name|replace(".", "_") }}
     {% endfor %}
 {% endif %}
 
